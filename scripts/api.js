@@ -1,170 +1,249 @@
-/////////////////////
-// Public API
-/////////////////////
+/****************************************************
+ Dependencies
+ ****************************************************/
 
-exports.listBusinesses = function() {
-    return exports.get('/business');
-};
+let httpReference = dependencies.http;
 
-exports.createDocument = function(body) {
-    if (body.files) {
-        body.files.forEach(function(file) {
-            // first check if this is a Slingr ID; otherwise leave as it is
-            if (file.file_id && file.file_id.length == 24) {
-                var uploadedFile = exports.uploadFile(file.name, file.file_id);
-                // replace file_id by the one returned by eversign
-                file.file_id = uploadedFile.file_id;
-            }
-        });
+let httpDependency = {
+    get: httpReference.get,
+    post: httpReference.post,
+    put: httpReference.put,
+    patch: httpReference.patch,
+    delete: httpReference.delete,
+    head: httpReference.head,
+    options: httpReference.options
+}
+
+let httpService = {}
+
+/**
+ *
+ * Handles a request with retry from the platform side.
+ */
+function handleRequestWithRetry(requestFn, options, callbackData, callbacks) {
+    try {
+        return requestFn(options, callbackData, callbacks);
+    } catch (error) {
+        sys.logs.info("[eversign] Handling request "+JSON.stringify(error));
     }
-    return exports.post('/document', body);
-};
+}
 
-exports.createDocumentFromTemplate = function(body) {
-    if (!body || !body.template_id) {
-        sys.exceptions.throwException('badRequest', 'template_id must be present');
-    }
-    return exports.post('/document', body);
-};
-
-exports.getDocument = function(documentHash) {
-    return exports.get('/document', {params: {document_hash: documentHash}});
-};
-
-exports.getTemplate = function(templateHash) {
-    return exports.get('/document', {params: {document_hash: templateHash}});
-};
-
-exports.listDocuments = function(type) {
-    if (!type) type = 'all';
-    return exports.get('/document', {params: {type: type}});
-};
-
-exports.listTemplates = function(type) {
-    if (!type) type = 'templates';
-    return exports.get('/document', {params: {type: type}});
-};
-
-exports.sendReminder = function(documentHash, signerId) {
-    return exports.post('/send_reminder', {document_hash: documentHash, signer_id: signerId});
-};
-
-exports.deleteDocument = function(documentHash) {
-    return exports.delete('/document', {params: {document_hash: documentHash}});
-};
-
-exports.deleteTemplate = function(documentHash) {
-    return exports.delete('/document', {params: {document_hash: documentHash}});
-};
-
-exports.cancelDocument = function(documentHash) {
-    return exports.delete('/document', {params: {document_hash: documentHash, cancel: 1}});
-};
-
-exports.downloadOriginalDocument = function(documentHash, fileName) {
-    var request = {
-        path: '/download_raw_document',
-        params: {
-            document_hash: documentHash
-        },
-        forceDownload: true,
-        downloadSync: true,
-        fileName: fileName || 'document.pdf'
+function createWrapperFunction(requestFn) {
+    return function(options, callbackData, callbacks) {
+        return handleRequestWithRetry(requestFn, options, callbackData, callbacks);
     };
-    return exports.get(request);
+}
+
+for (let key in httpDependency) {
+    if (typeof httpDependency[key] === 'function') httpService[key] = createWrapperFunction(httpDependency[key]);
+}
+
+/****************************************************
+ Public API - Generic Functions
+ ****************************************************/
+
+/**
+ * Sends an HTTP GET request to the specified URL with the provided HTTP options.
+ *
+ * @param {string} path         - The path to send the GET request to.
+ * @param {object} httpOptions  - The options to be included in the GET request check http-service documentation.
+ * @param {object} callbackData - Additional data to be passed to the callback functions. [optional]
+ * @param {object} callbacks    - The callback functions to be called upon completion of the GET request. [optional]
+ * @return {object}             - The response of the GET request.
+ */
+exports.get = function(path, httpOptions, callbackData, callbacks) {
+    let options = checkHttpOptions(path, httpOptions);
+    return httpService.get(Eversign(options), callbackData, callbacks);
 };
 
-exports.downloadFinalDocument = function(documentHash, fileName, auditTrail) {
-    var request = {
-        path: '/download_final_document',
-        params: {
-            document_hash: documentHash
-        },
-        forceDownload: true,
-        downloadSync: true,
-        fileName: fileName || 'document.pdf'
-    };
-    if (auditTrail) {
-        request.params.audit_trail = 1;
-    }
-    return exports.get(request);
+/**
+ * Sends an HTTP POST request to the specified URL with the provided HTTP options.
+ *
+ * @param {string} path         - The path to send the POST request to.
+ * @param {object} httpOptions  - The options to be included in the POST request check http-service documentation.
+ * @param {object} callbackData - Additional data to be passed to the callback functions. [optional]
+ * @param {object} callbacks    - The callback functions to be called upon completion of the POST request. [optional]
+ * @return {object}             - The response of the POST request.
+ */
+exports.post = function(path, httpOptions, callbackData, callbacks) {
+    let options = checkHttpOptions(path, httpOptions);
+    return httpService.post(Eversign(options), callbackData, callbacks);
 };
 
-exports.uploadFile = function(name, fileId) {
-    return exports.post({
-        path: '/file',
-        multipart: true,
-        parts: [
-            {
-                name: 'upload',
-                type: 'file',
-                fileId: fileId
-            }
-        ]
-    });
+/**
+ * Sends an HTTP PUT request to the specified URL with the provided HTTP options.
+ *
+ * @param {string} path         - The path to send the PUT request to.
+ * @param {object} httpOptions  - The options to be included in the PUT request check http-service documentation.
+ * @param {object} callbackData - Additional data to be passed to the callback functions. [optional]
+ * @param {object} callbacks    - The callback functions to be called upon completion of the POST request. [optional]
+ * @return {object}             - The response of the PUT request.
+ */
+exports.put = function(path, httpOptions, callbackData, callbacks) {
+    let options = checkHttpOptions(path, httpOptions);
+    return httpService.put(Eversign(options), callbackData, callbacks);
 };
 
-///////////////////////////////////
-// Public API - Generic Functions
-///////////////////////////////////
-
-exports.get = function(url, options) {
-    options = checkHttpOptions(url, options);
-    return httpService.get(Eversign(options));
+/**
+ * Sends an HTTP PATCH request to the specified URL with the provided HTTP options.
+ *
+ * @param {string} path         - The path to send the PATCH request to.
+ * @param {object} httpOptions  - The options to be included in the PATCH request check http-service documentation.
+ * @param {object} callbackData - Additional data to be passed to the callback functions. [optional]
+ * @param {object} callbacks    - The callback functions to be called upon completion of the POST request. [optional]
+ * @return {object}             - The response of the PATCH request.
+ */
+exports.patch = function(path, httpOptions, callbackData, callbacks) {
+    let options = checkHttpOptions(path, httpOptions);
+    return httpService.patch(Eversign(options), callbackData, callbacks);
 };
 
-exports.post = function(url, options) {
-    options = checkHttpOptions(url, options);
-    return httpService.post(Eversign(options));
+/**
+ * Sends an HTTP DELETE request to the specified URL with the provided HTTP options.
+ *
+ * @param {string} path         - The path to send the DELETE request to.
+ * @param {object} httpOptions  - The options to be included in the DELETE request check http-service documentation.
+ * @param {object} callbackData - Additional data to be passed to the callback functions. [optional]
+ * @param {object} callbacks    - The callback functions to be called upon completion of the DELETE request. [optional]
+ * @return {object}             - The response of the DELETE request.
+ */
+exports.delete = function(path, httpOptions, callbackData, callbacks) {
+    let options = checkHttpOptions(path, httpOptions);
+    return httpService.delete(Eversign(options), callbackData, callbacks);
 };
 
-exports.delete = function(url, options) {
-    options = checkHttpOptions(url, options);
-    return httpService.delete(Eversign(options));
+/**
+ * Sends an HTTP HEAD request to the specified URL with the provided HTTP options.
+ *
+ * @param {string} path         - The path to send the HEAD request to.
+ * @param {object} httpOptions  - The options to be included in the HEAD request check http-service documentation.
+ * @param {object} callbackData - Additional data to be passed to the callback functions. [optional]
+ * @param {object} callbacks    - The callback functions to be called upon completion of the HEAD request. [optional]
+ * @return {object}             - The response of the HEAD request.
+ */
+exports.head = function(path, httpOptions, callbackData, callbacks) {
+    let options = checkHttpOptions(path, httpOptions);
+    return httpService.head(Eversign(options), callbackData, callbacks);
 };
 
+/**
+ * Sends an HTTP OPTIONS request to the specified URL with the provided HTTP options.
+ *
+ * @param {string} path         - The path to send the OPTIONS request to.
+ * @param {object} httpOptions  - The options to be included in the OPTIONS request check http-service documentation.
+ * @param {object} callbackData - Additional data to be passed to the callback functions. [optional]
+ * @param {object} callbacks    - The callback functions to be called upon completion of the OPTIONS request. [optional]
+ * @return {object}             - The response of the OPTIONS request.
+ */
+exports.options = function(path, httpOptions, callbackData, callbacks) {
+    let options = checkHttpOptions(path, httpOptions);
+    return httpService.options(Eversign(options), callbackData, callbacks);
+};
 
-/////////////////////////////////////
-//  Private helpers
-////////////////////////////////////
+exports.utils = {
 
-var checkHttpOptions = function (url, options) {
+    /**
+     * Converts a given date to a timestamp.
+     *
+     * @param {number | string} params      - The date to be converted.
+     * @return {object}                     - An object containing the timestamp.
+     */
+    fromDateToTimestamp: function(params) {
+        if (!!params) {
+            return {timestamp: new Date(params).getTime()};
+        }
+        return null;
+    },
+
+    /**
+     * Converts a timestamp to a date object.
+     *
+     * @param {number} timestamp            - The timestamp to convert.
+     * @return {object}                     - The date object representing the timestamp.
+     */
+    fromTimestampToDate: function(timestamp) {
+        return new Date(timestamp);
+    },
+
+    /**
+     * Gets a configuration from the properties.
+     *
+     * @param {string} property             - The name of the property to get.
+     *                                          If it is empty, return the entire configuration object.
+     * @return {string}                     - The value of the property or the whole object as string.
+     */
+    getConfiguration: function (property) {
+        if (!property) {
+            sys.logs.debug('[eversign] Get configuration');
+            return JSON.stringify(config.get());
+        }
+        sys.logs.debug('[eversign] Get property: '+property);
+        return config.get(property);
+    },
+
+    /**
+     * Concatenates a path with a param query and its value.
+     *
+     * @param path                          - The path to concatenate.
+     * @param key                           - The name of the param.
+     * @param value                         - The value of the param.
+     * @returns {string}                    - The concatenated path without coding parameters.
+     */
+    concatQuery: function (path, key, value) {
+        return path + ((!path || path.indexOf('?') < 0) ? '?' : '&') + key + "=" + value;
+    },
+
+    /**
+     * Merges two JSON objects into a single object.
+     *
+     * @param {Object} json1 - The first JSON object to be merged.
+     * @param {Object} json2 - The second JSON object to be merged.
+     * @return {Object} - The merged JSON object.
+     */
+    mergeJSON: mergeJSON,
+};
+
+/****************************************************
+ Private helpers
+ ****************************************************/
+
+function checkHttpOptions (path, options) {
     options = options || {};
-    if (!!url) {
-        if (isObject(url)) {
-            // take the 'url' parameter as the options
-            options = url || {};
+    if (!!path) {
+        if (isObject(path)) {
+            // take the 'path' parameter as the options
+            options = path || {};
         } else {
             if (!!options.path || !!options.params || !!options.body) {
                 // options contain the http package format
-                options.path = url;
+                options.path = path;
             } else {
                 // create html package
                 options = {
-                    path: url,
+                    path: path,
                     body: options
                 }
             }
         }
     }
     return options;
-};
+}
 
-var isObject = function (obj) {
+function isObject (obj) {
     return !!obj && stringType(obj) === '[object Object]'
-};
+}
 
-var stringType = Function.prototype.call.bind(Object.prototype.toString);
-
+let stringType = Function.prototype.call.bind(Object.prototype.toString)
 
 /****************************************************
  Configurator
  ****************************************************/
 
-var Eversign = function (options) {
+let Eversign = function (options) {
     options = options || {};
-    options= setApiUri(options);
-    options= setRequestHeaders(options);
+    options = setApiUri(options);
+    options = setRequestHeaders(options);
+    options = setAuthorization(options);
     return options;
 }
 
@@ -173,29 +252,30 @@ var Eversign = function (options) {
  ****************************************************/
 
 function setApiUri(options) {
-    var API_URL = config.get("EVERSIGN_API_BASE_URL"); // TODO: Set the base url for the api in the package.json (Remove this comment after set the url)
-    var url = options.path || "";
-    options.url = API_URL + url;
+    var API_URL = config.get("EVERSIGN_API_BASE_URL");
+    var path = options.path || "";
+    options.url = API_URL + path;
     sys.logs.debug('[eversign] Set url: ' + options.path + "->" + options.url);
     return options;
 }
 
-function setRequestHeaders(options) {
-    var headers = options.headers || {};
-    if (config.get("authenticationMethod") === "apiKey") { // TODO: Set the authentication method, if needed or remove this if (Remove comments after set the url)
-        sys.logs.debug('[eversign] Set header apikey');
-        headers = mergeJSON(headers, {"Authorization": "API-Key " + config.get("apiKey")});
-    } 
-    headers = mergeJSON(headers, {"Content-Type": "application/json"});
 
+function setRequestHeaders(options) {
+    let headers = options.headers || {};
+    headers = mergeJSON(headers, {"Content-Type": "application/json"});
     options.headers = headers;
     return options;
 }
 
+function setAuthorization(options) {
+    sys.logs.debug('[eversign] setting authorization');
+    options.url += "?access_key" + config.get("access_key");
+    return options;
+}
 
 function mergeJSON (json1, json2) {
     const result = {};
-    var key;
+    let key;
     for (key in json1) {
         if(json1.hasOwnProperty(key)) result[key] = json1[key];
     }
@@ -204,3 +284,4 @@ function mergeJSON (json1, json2) {
     }
     return result;
 }
+
