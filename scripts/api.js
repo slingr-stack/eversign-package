@@ -244,6 +244,7 @@ let Eversign = function (options) {
     options = setApiUri(options);
     options = setRequestHeaders(options);
     options = setAuthorization(options);
+    options = setBody(options);
     return options;
 }
 
@@ -259,6 +260,16 @@ function setApiUri(options) {
     return options;
 }
 
+function setBody(options) {
+    var body = options.body || "";
+    if (config.get("sandboxMode") === "yes"){
+        body = mergeJSON(body, {"sandbox": 1});
+        options.body = body;
+        return options;
+    }
+    return options;
+}
+
 
 function setRequestHeaders(options) {
     let headers = options.headers || {};
@@ -269,7 +280,10 @@ function setRequestHeaders(options) {
 
 function setAuthorization(options) {
     sys.logs.debug('[eversign] setting authorization');
-    options.url += "?access_key" + config.get("access_key");
+    options.url += "?access_key=" + config.get("apiKey");
+    if (config.get("businessId")){
+        options.url += "&business_id=" + config.get("businessId")
+    }
     return options;
 }
 
