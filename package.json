@@ -1,0 +1,77 @@
+{
+    "name": "eversign",
+    "label": "Eversign Package",
+    "dependencies": [
+        {
+            "type": "service",
+            "name": "http",
+            "version": "v1.3.7",
+            "instanceId": "shared"
+        }
+    ],
+    "configuration": [
+        {
+            "name": "apiKey",
+            "label": "API key",
+            "type": "text",
+            "required": true
+        },
+        {
+            "name": "businessId",
+            "label": "Business ID",
+            "type": "text",
+            "required": false
+        },
+        {
+            "name": "sandboxMode",
+            "label": "Sandbox mode",
+            "type": "buttonsGroup",
+            "required": true,
+            "defaultValue": "yes",
+            "typeOptions": {
+                "allowCustom": true,
+                "possibleValues": [
+                    {
+                        "label": "Yes",
+                        "name": "yes"
+                    },
+                    {
+                        "label": "No",
+                        "name": "no"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "webhook",
+            "label": "Webhook URL",
+            "type": "label",
+            "value": "config.WEBHOOK_URL"
+        },
+        {
+            "name": "EVERSIGN_API_BASE_URL",
+            "label": "Eversign Api Url",
+            "type": "label",
+            "value": "https://api.eversign.com"
+        }
+    ],
+    "events": [
+        {
+            "label": "Webhook",
+            "name": "webhook",
+            "description": "Event triggered when there is a webhook coming from Eversign."
+        }
+    ],
+    "metadata": [
+        {
+            "type": "script",
+            "namespace": "api",
+            "path": "/scripts/api.js"
+        },
+        {
+            "type": "flowStep",
+            "namespace": "apiCallEversign",
+            "path": "/flowSteps/apiCallEversign"
+        }
+    ]
+}
