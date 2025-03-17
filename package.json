@@ -69,9 +69,14 @@
             "path": "/scripts/api.js"
         },
         {
-            "type": "flowStep",
-            "namespace": "apiCallEversign",
-            "path": "/flowSteps/apiCallEversign"
+            "type": "script",
+            "namespace": "utils",
+            "path": "/scripts/utils.js"
+        },
+        {
+            "type": "listener",
+            "namespace": "webhook",
+            "path": "/listeners/webhook.js"
         }
     ]
 }
