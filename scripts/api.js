@@ -195,11 +195,6 @@ function setApiUri(options) {
 
 function setBody(options) {
     var body = options.body || "";
-    if (config.get("sandboxMode") === "yes"){
-        body = mergeJSON(body, {"sandbox": 1});
-        options.body = body;
-        return options;
-    }
     return options;
 }
 
