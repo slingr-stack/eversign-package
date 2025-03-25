@@ -60,8 +60,6 @@ var response = pkg.eversign.api.delete('/document')
 Please take a look at the documentation of the [HTTP service](https://github.com/slingr-stack/http-service)
 for more information about generic requests.
 
-[More info about Slingr](https://slingr.io)
-
 ## Dependencies
 * HTTP Service
 
