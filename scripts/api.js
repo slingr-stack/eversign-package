@@ -129,7 +129,7 @@ function setApiUri(options) {
     var API_URL = config.get("EVERSIGN_API_BASE_URL");
     var path = options.path || "";
     options.url = API_URL + path;
-    sys.logs.debug('[eversign] Set url: ' + options.path + "->" + options.url);
+    sys.logs.info('[eversign] Set url: ' + options.path + "->" + options.url);
     return options;
 }
 
@@ -147,10 +147,12 @@ function setRequestHeaders(options) {
 }
 
 function setAuthorization(options) {
-    sys.logs.debug('[eversign] setting authorization');
-    options.url += "?access_key=" + config.get("apiKey");
-    if (config.get("businessId")){
-        options.url += "&business_id=" + config.get("businessId")
+    sys.logs.info('[eversign] setting authorization');
+    options.params = {
+        access_key: config.get("apiKey"),
+    };
+    if (config.get("businessId")) {
+        options.params.business_id = config.get("businessId");
     }
     return options;
 }

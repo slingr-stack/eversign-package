@@ -2,8 +2,8 @@
  Listeners
  ****************************************************/
 
-listeners.defaultWebhookSendGrid = {
-    label: 'Catch HTTP SendGrid events',
+listeners.defaultWebhookEversign = {
+    label: 'Catch HTTP Eversign events',
     type: 'service',
     options: {
         service: 'http',
