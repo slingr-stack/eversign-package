@@ -1,18 +1,17 @@
 {
     "name": "eversign",
-    "label": "Eversign Package",
+    "label": "Eversign",
     "dependencies": [
         {
             "type": "service",
             "name": "http",
-            "version": "v1.3.7",
-            "instanceId": "shared"
+            "version": "v1.8.5"
         }
     ],
     "configuration": [
         {
             "name": "apiKey",
-            "label": "API key",
+            "label": "API Key",
             "type": "text",
             "required": true
         },
@@ -24,7 +23,7 @@
         },
         {
             "name": "sandboxMode",
-            "label": "Sandbox mode",
+            "label": "Sandbox Mode",
             "type": "buttonsGroup",
             "required": true,
             "defaultValue": "yes",
@@ -50,7 +49,7 @@
         },
         {
             "name": "EVERSIGN_API_BASE_URL",
-            "label": "Eversign Api Url",
+            "label": "Eversign API URL",
             "type": "label",
             "value": "https://api.eversign.com"
         }
@@ -69,9 +68,14 @@
             "path": "/scripts/api.js"
         },
         {
-            "type": "flowStep",
-            "namespace": "apiCallEversign",
-            "path": "/flowSteps/apiCallEversign"
+            "type": "script",
+            "namespace": "utils",
+            "path": "/scripts/utils.js"
+        },
+        {
+            "type": "listener",
+            "namespace": "webhook",
+            "path": "/listeners/webhook.js"
         }
     ]
 }
