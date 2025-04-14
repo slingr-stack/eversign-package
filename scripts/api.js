@@ -150,12 +150,12 @@ function setRequestHeaders(options) {
 
 function setAuthorization(options) {
     sys.logs.info('[eversign] setting authorization');
-    options.params = {
-        access_key: config.get("apiKey"),
-    };
+    let params = options.params || {};
+    params = mergeJSON(params, { access_key: config.get("apiKey") })
     if (config.get("businessId")) {
-        options.params.business_id = config.get("businessId");
+        params = mergeJSON(params, { business_id: config.get("businessId") })
     }
+    options.params = params;
     return options;
 }
 
