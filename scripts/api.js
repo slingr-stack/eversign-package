@@ -141,7 +141,9 @@ function setBody(options) {
 
 function setRequestHeaders(options) {
     let headers = options.headers || {};
-    headers = mergeJSON(headers, {"Content-Type": "application/json"});
+    if (! headers['Content-Type']) {
+        headers = mergeJSON(headers, {"Content-Type": "application/json"});
+    }
     options.headers = headers;
     return options;
 }
